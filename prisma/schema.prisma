@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuarios {
+  idUsuario       Int      @id @default(autoincrement())
+  nome           String   @db.VarChar(200)
+  email          String   @unique @db.VarChar(200)
+  senha          String   @db.VarChar(200)
+  telefone       String   @unique @db.VarChar(20)
+  endereco       String   @db.VarChar(200)
+  perfilUsuario  String   @db.VarChar(20)
+  nomeOrganizacao String?  @db.VarChar(200)
+  dataCadastro   DateTime @default(now())
+  lastEdit       DateTime?
+  status         StatusUsuario @default(ATIVO)
+  
+  produtos       Produtos[]
+  doacoesRecebidas Doacoes[] @relation("Receptor")
+  auditorias     AuditoriaProdutos[]
+}
+
+model Produtos {
+  idProduto    Int      @id @default(autoincrement())
+  imagem       String   @unique @db.VarChar(255)
+  descricao    String   @db.VarChar(200)
+  quantidade   Float
+  unidade      String   @db.VarChar(20)
+  tipo         String   @db.VarChar(20)
+  status       StatusProduto @default(DISPONIVEL)
+  idDoador     Int
+  dataPostagem DateTime @default(now())
+  
+  doador       Usuarios  @relation(fields: [idDoador], references: [idUsuario])
+  doacoes      Doacoes[]
+  auditorias   AuditoriaProdutos[]
+
+  @@unique([idProduto, idDoador])
+}
+
+model Doacoes {
+  idDoacao      Int      @id @default(autoincrement())
+  quantidade    Float
+  idProduto     Int
+  idDoador      Int
+  idReceptor    Int
+  dataReserva   DateTime @default(now())
+  dataPlanejada DateTime
+  
+  produto      Produtos  @relation(fields: [idProduto, idDoador], references: [idProduto, idDoador])
+  receptor     Usuarios  @relation("Receptor", fields: [idReceptor], references: [idUsuario])
+}
+
+model AuditoriaProdutos {
+  idAuditoria  Int      @id @default(autoincrement())
+  idProduto    Int
+  idUsuario    Int
+  campoAlterado String  @db.VarChar(100)
+  valorAntigo  String?  @db.Text
+  valorNovo    String?  @db.Text
+  dataAlteracao DateTime @default(now())
+  
+  produto      Produtos  @relation(fields: [idProduto], references: [idProduto])
+  usuario      Usuarios  @relation(fields: [idUsuario], references: [idUsuario])
+}
+
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+}
+
+enum StatusProduto {
+  DISPONIVEL
+  INDISPONIVEL
+  DOADO
+}
