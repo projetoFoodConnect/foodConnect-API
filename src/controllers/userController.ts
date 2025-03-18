@@ -49,3 +49,54 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Erro ao cadastrar usuário', error });
   }
 };
+
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, senha } = req.body;
+
+  try {
+    const usuario = await prisma.usuarios.findUnique({
+      where: { email },
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Senha incorreta' });
+    }
+
+    const token = jwt.sign(
+      { userId: usuario.idUsuario, email: usuario.email, perfil: usuario.perfilUsuario },
+      process.env.JWT_SECRET!,
+      { expiresIn: '2h' }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 2 * 60 * 60 * 1000, // Expira em 2 horas
+    });
+
+    const updateLogin = await prisma.usuarios.update({
+      where: { idUsuario: usuario.idUsuario },
+      data: {
+        lastEdit: new Date(),
+      },
+    });
+
+    return res.json({ message: "Login bem-sucedido!", 
+    user: { 
+      id: usuario.idUsuario, 
+      nameUser: usuario.nome, 
+      email: usuario.email, 
+      lastLogin: updateLogin.lastEdit},
+     });
+
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    res.status(500).json({ message: 'Erro ao fazer login', error });
+  }
+};
