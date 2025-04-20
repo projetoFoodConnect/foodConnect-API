@@ -78,7 +78,7 @@ export const loginUser = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      maxAge: 2 * 60 * 60 * 1000, // Expira em 2 horas
+      maxAge: 24 * 60 * 60 * 1000, // Expira em 24 horas
     });
 
     const updateLogin = await prisma.usuarios.update({
@@ -100,4 +100,9 @@ export const loginUser = async (req: Request, res: Response) => {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ message: 'Erro ao fazer login', error });
   }
+};
+
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  res.clearCookie("token"); // se estiver usando cookies
+  res.status(200).json({ message: "Logout realizado com sucesso!" });
 };

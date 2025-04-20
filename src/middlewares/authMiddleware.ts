@@ -9,7 +9,7 @@ interface AuthenticatedRequest extends Request {
     const token = req.cookies?.token;
   
     if (!token) {
-      return res.status(401).json({ message: "Token não fornecido. Acesso negado." });
+      res.status(401).json({ message: "Token não fornecido. Acesso negado." });
     }
   
     try {
@@ -17,6 +17,6 @@ interface AuthenticatedRequest extends Request {
       req.user = decoded;
       next();
     } catch (error) {
-      return res.status(403).json({ message: "Token inválido ou expirado." });
+      res.status(403).json({ message: "Token inválido ou expirado." });
     }
   };
