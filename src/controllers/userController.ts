@@ -142,3 +142,38 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response): 
 
   res.status(200).json({ usuario });
 };
+
+export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise <void> => {
+  const idUsuario = (req.user as JwtPayload)?.userId;
+  const { nome, email, senha, telefone, endereco, nomeOrganizacao } = req.body;
+
+  const usuario = await prisma.usuarios.findUnique({
+    where: { idUsuario },
+  });
+
+  if (!usuario) {
+    res.status(401).json({ message: "Usuário não autenticado." });
+    return;
+  }
+
+  try {
+    const usuarioAtualizado = await prisma.usuarios.update({
+      where: { idUsuario },
+      data: {
+        nome: nome || usuario.nome,
+        email: email || usuario.email,
+        senha: senha ? await bcrypt.hash(senha, 10) : usuario.senha,
+        telefone: telefone || usuario.telefone,
+        endereco: endereco || usuario.endereco,
+        nomeOrganizacao: nomeOrganizacao || usuario.nomeOrganizacao,
+      },
+    });
+
+    const { senha: _, ...usuarioSemSenha } = usuarioAtualizado;
+
+    res.status(200).json({ message: "Usuário atualizado com sucesso!", usuarioSemSenha });
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ message: 'Erro ao atualizar usuário', error });
+  }
+};
