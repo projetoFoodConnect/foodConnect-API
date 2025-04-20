@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
-export const registerUser = async (req: Request, res: Response) => {
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
+
+export const registerUser = async (req: Request, res: Response)=> {
   const { nome, email, senha, telefone, endereco, perfilUsuario, nomeOrganizacao } = req.body;
 
   if (!email || !senha || !nome || !perfilUsuario || !telefone || !endereco || !nomeOrganizacao) {
@@ -102,7 +106,39 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const logoutUser = async (req: Request, res: Response): Promise<void> => {
-  res.clearCookie("token"); // se estiver usando cookies
+export const logoutUser = async (req: Request, res: Response) => {
+  res.clearCookie("token"); 
   res.status(200).json({ message: "Logout realizado com sucesso!" });
+};
+
+export const getUserProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const idUsuario = (req.user as JwtPayload)?.userId;
+
+  if (!idUsuario) {
+    res.status(401).json({ message: "Usuário não autenticado." });
+    return;
+  }
+
+  const usuario = await prisma.usuarios.findUnique({
+    where: { idUsuario },
+    select: {
+      idUsuario: true,
+      nome: true,
+      email: true,
+      telefone: true,
+      endereco: true,
+      perfilUsuario: true,
+      nomeOrganizacao: true,
+      dataCadastro: true,
+      lastLogin: true,
+      status: true,
+    },
+  });
+
+  if (!usuario) {
+    res.status(404).json({ message: "Usuário não encontrado." });
+    return;
+  }
+
+  res.status(200).json({ usuario });
 };
