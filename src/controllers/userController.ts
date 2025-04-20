@@ -33,6 +33,7 @@ export const registerUser = async (req: Request, res: Response) => {
         perfilUsuario,
         nomeOrganizacao,
         dataCadastro: new Date(),
+        lastLogin: new Date(),
         status: "ATIVO"
       }
     });
@@ -83,7 +84,7 @@ export const loginUser = async (req: Request, res: Response) => {
     const updateLogin = await prisma.usuarios.update({
       where: { idUsuario: usuario.idUsuario },
       data: {
-        lastEdit: new Date(),
+        lastLogin: new Date(),
       },
     });
 
@@ -92,7 +93,7 @@ export const loginUser = async (req: Request, res: Response) => {
       id: usuario.idUsuario, 
       nameUser: usuario.nome, 
       email: usuario.email, 
-      lastLogin: updateLogin.lastEdit},
+      lastLogin: updateLogin.lastLogin},
      });
 
   } catch (error) {

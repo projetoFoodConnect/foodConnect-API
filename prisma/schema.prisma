@@ -17,7 +17,7 @@ model Usuarios {
   perfilUsuario  String   @db.VarChar(20)
   nomeOrganizacao String?  @db.VarChar(200)
   dataCadastro   DateTime @default(now())
-  lastEdit       DateTime?
+  lastLogin       DateTime?
   status         StatusUsuario @default(ATIVO)
   
   produtos       Produtos[]
