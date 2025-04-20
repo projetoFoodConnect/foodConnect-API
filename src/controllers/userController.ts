@@ -21,7 +21,7 @@ export const registerUser = async (req: Request, res: Response)=> {
       where: { email },
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.status === "ATIVO") {
       return res.status(400).json({ message: 'Email já registrado' });
     }
 
@@ -63,7 +63,7 @@ export const loginUser = async (req: Request, res: Response) => {
       where: { email },
     });
 
-    if (!usuario) {
+    if (!usuario || usuario.status !== "ATIVO") {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
@@ -177,3 +177,24 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(500).json({ message: 'Erro ao atualizar usuário', error });
   }
 };
+
+export const deleteUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const idUsuario = (req.user as JwtPayload)?.userId;
+
+  if (!idUsuario) {
+    res.status(401).json({ message: "Usuário não autenticado." });
+    return;
+  }
+
+  try {
+    await prisma.usuarios.update({
+      where: { idUsuario },
+      data: { status: "INATIVO" },
+    });
+
+    res.status(200).json({ message: "Usuário deletado com sucesso!" });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).json({ message: 'Erro ao deletar usuário', error });
+  }
+}

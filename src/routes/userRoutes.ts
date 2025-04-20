@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { registerUser, loginUser, logoutUser, getUserProfile, updateUser } from "../controllers/userController";
+import { registerUser, loginUser, logoutUser, getUserProfile, updateUser, deleteUser } from "../controllers/userController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -25,5 +25,7 @@ router.post("/user/logout", authenticateToken, logoutUser);
 router.get("/user", authenticateToken, getUserProfile);
 
 router.put("/user/update", authenticateToken, updateUser);
+
+router.put("/user/delete", authenticateToken, deleteUser);
 
 export default router;
