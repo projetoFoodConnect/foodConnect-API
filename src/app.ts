@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import usuarioRoutes from "./routes/userRoutes";
+import produtoRoutes from "./routes/procuctRoutes";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api", usuarioRoutes);
+app.use("/api", produtoRoutes);
 
 app.get("/", (req, res) => {
   res.send("API FoodConnect rodando!");
