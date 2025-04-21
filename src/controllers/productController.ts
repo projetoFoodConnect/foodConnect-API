@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, StatusProduto } from "@prisma/client";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { JwtPayload } from "jsonwebtoken";
 
@@ -112,3 +112,38 @@ export const getProductByUser = async (
       res.status(500).json({ message: "Erro ao buscar produtos", error });
     }
   };
+
+  export const getProductByStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const status = req.params.status?.toUpperCase(); // garante que está em caixa alta
+
+  const statusPermitidos = ["DISPONIVEL", "INDISPONIVEL", "DOADO"];
+
+  if (!statusPermitidos.includes(status)) {
+    res.status(400).json({ message: "Status inválido. Use DISPONIVEL, INDISPONIVEL ou DOADO." });
+    return;
+  }
+
+  try {
+    const produtos = await prisma.produtos.findMany({
+      where: { status: status as StatusProduto },
+      orderBy: { dataPostagem: "desc" },
+      include: {
+        doador: {
+          select: {
+            idUsuario: true,
+            nome: true,
+            nomeOrganizacao: true,
+          }
+        }
+      }
+    });
+
+    res.status(200).json({ produtos });
+  } catch (error) {
+    console.error("Erro ao buscar produtos por status:", error);
+    res.status(500).json({ message: "Erro ao buscar produtos", error });
+  }
+};
