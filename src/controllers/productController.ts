@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { JwtPayload } from "jsonwebtoken";
@@ -36,3 +36,41 @@ export const cadastrarProduto = async (
     res.status(500).json({ message: "Erro ao cadastrar produto", error });
   }
 };
+
+export const getProductById = async (
+    req: Request<{ id: string }>,
+    res: Response
+  ): Promise<void> => {
+    const idProduto = parseInt(req.params.id);
+  
+    if (isNaN(idProduto)) {
+      res.status(400).json({ message: "ID inválido." });
+      return;
+    }
+  
+    try {
+      const produto = await prisma.produtos.findUnique({
+        where: { idProduto },
+        include: {
+          doador: {
+            select: {
+              idUsuario: true,
+              nome: true,
+              email: true,
+              nomeOrganizacao: true,
+            }
+          }
+        }
+      });
+  
+      if (!produto) {
+        res.status(404).json({ message: "Produto não encontrado." });
+        return;
+      }
+  
+      res.status(200).json({ produto });
+    } catch (error) {
+      console.error("Erro ao buscar produto:", error);
+      res.status(500).json({ message: "Erro ao buscar produto", error });
+    }
+  };
