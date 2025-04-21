@@ -74,3 +74,41 @@ export const getProductById = async (
       res.status(500).json({ message: "Erro ao buscar produto", error });
     }
   };
+
+  export const listarProdutosPorUsuario = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const idDoador = (req.user as JwtPayload)?.userId;
+
+  try {
+    const produtos = await prisma.produtos.findMany({
+      where: { idDoador },
+      orderBy: { dataPostagem: "desc" },
+    });
+
+    res.status(200).json({ produtos });
+  } catch (error) {
+    console.error("Erro ao buscar produtos do usuário:", error);
+    res.status(500).json({ message: "Erro ao buscar produtos", error });
+  }
+};
+
+export const getProductByUser = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    const idDoador = (req.user as JwtPayload)?.userId;
+  
+    try {
+      const produtos = await prisma.produtos.findMany({
+        where: { idDoador },
+        orderBy: { dataPostagem: "desc" },
+      });
+  
+      res.status(200).json({ produtos });
+    } catch (error) {
+      console.error("Erro ao buscar produtos do usuário:", error);
+      res.status(500).json({ message: "Erro ao buscar produtos", error });
+    }
+  };
