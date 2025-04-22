@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient, StatusProduto } from "@prisma/client";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
+import { deletarImagemCloudinary } from "../utils/cloudinaryUtils";
 import { JwtPayload } from "jsonwebtoken";
 
 const prisma = new PrismaClient();
@@ -170,5 +171,53 @@ export const getAllProducts = async (
     } catch (error) {
       console.error("Erro ao listar todos os produtos:", error);
       res.status(500).json({ message: "Erro ao listar produtos", error });
+    }
+  };
+
+  export const updateProduct = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    const idProduto = parseInt(req.params.id);
+    const idDoador = (req.user as JwtPayload)?.userId;
+    const { descricao, quantidade, unidade, tipo, status } = req.body;
+  
+    if (isNaN(idProduto)) {
+      res.status(400).json({ message: "ID do produto inválido." });
+      return;
+    }
+  
+    try {
+      const produto = await prisma.produtos.findUnique({
+        where: { idProduto },
+      });
+  
+      if (!produto || produto.idDoador !== idDoador) {
+        res.status(403).json({ message: "Você não tem permissão para editar este produto." });
+        return;
+      }
+  
+      if (req.file && produto.imagem) {
+        await deletarImagemCloudinary(produto.imagem);
+      }
+      
+      const novaImagem = req.file?.path || produto.imagem;
+      
+      const produtoAtualizado = await prisma.produtos.update({
+        where: { idProduto },
+        data: {
+          imagem: novaImagem,
+          descricao: descricao || produto.descricao,
+          quantidade: quantidade ? parseFloat(quantidade) : produto.quantidade,
+          unidade: unidade || produto.unidade,
+          tipo: tipo || produto.tipo,
+          status: status || produto.status,
+        },
+      });
+  
+      res.status(200).json({ message: "Produto atualizado com sucesso!", produtoAtualizado });
+    } catch (error) {
+      console.error("Erro ao editar produto:", error);
+      res.status(500).json({ message: "Erro ao editar produto", error });
     }
   };
