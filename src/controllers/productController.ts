@@ -147,3 +147,28 @@ export const getProductByUser = async (
     res.status(500).json({ message: "Erro ao buscar produtos", error });
   }
 };
+
+export const getAllProducts = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const produtos = await prisma.produtos.findMany({
+        orderBy: { dataPostagem: "desc" },
+        include: {
+          doador: {
+            select: {
+              idUsuario: true,
+              nome: true,
+              nomeOrganizacao: true,
+            }
+          }
+        }
+      });
+  
+      res.status(200).json({ produtos });
+    } catch (error) {
+      console.error("Erro ao listar todos os produtos:", error);
+      res.status(500).json({ message: "Erro ao listar produtos", error });
+    }
+  };
