@@ -39,44 +39,63 @@ export const cadastrarProduto = async (
 };
 
 export const getProductById = async (
-    req: Request<{ id: string }>,
-    res: Response
-  ): Promise<void> => {
-    const idProduto = parseInt(req.params.id);
-  
-    if (isNaN(idProduto)) {
-      res.status(400).json({ message: "ID inválido." });
-      return;
-    }
-  
-    try {
-      const produto = await prisma.produtos.findUnique({
-        where: { idProduto },
-        include: {
-          doador: {
-            select: {
-              idUsuario: true,
-              nome: true,
-              email: true,
-              nomeOrganizacao: true,
-            }
+  req: Request<{ id: string }>,
+  res: Response
+): Promise<void> => {
+  const idProduto = parseInt(req.params.id);
+
+  if (isNaN(idProduto)) {
+    res.status(400).json({ message: "ID inválido." });
+    return;
+  }
+
+  try {
+    const produto = await prisma.produtos.findUnique({
+      where: { idProduto },
+      include: {
+        doador: {
+          select: {
+            idUsuario: true,
+            nome: true,
+            email: true,
+            nomeOrganizacao: true,
           }
         }
-      });
-  
-      if (!produto) {
-        res.status(404).json({ message: "Produto não encontrado." });
-        return;
       }
-  
-      res.status(200).json({ produto });
-    } catch (error) {
-      console.error("Erro ao buscar produto:", error);
-      res.status(500).json({ message: "Erro ao buscar produto", error });
-    }
-  };
+    });
 
-  export const listarProdutosPorUsuario = async (
+    if (!produto) {
+      res.status(404).json({ message: "Produto não encontrado." });
+      return;
+    }
+
+    res.status(200).json({ produto });
+  } catch (error) {
+    console.error("Erro ao buscar produto:", error);
+    res.status(500).json({ message: "Erro ao buscar produto", error });
+  }
+};
+
+export const listarProdutosPorUsuario = async (
+  req: AuthenticatedRequest,
+  res: Response
+  ): Promise<void> => {
+  const idDoador = (req.user as JwtPayload)?.userId;
+
+  try {
+    const produtos = await prisma.produtos.findMany({
+      where: { idDoador },
+      orderBy: { dataPostagem: "desc" },
+    });
+
+    res.status(200).json({ produtos });
+  } catch (error) {
+    console.error("Erro ao buscar produtos do usuário:", error);
+    res.status(500).json({ message: "Erro ao buscar produtos", error });
+  }
+};
+
+export const getProductByUser = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -95,29 +114,10 @@ export const getProductById = async (
   }
 };
 
-export const getProductByUser = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
-    const idDoador = (req.user as JwtPayload)?.userId;
-  
-    try {
-      const produtos = await prisma.produtos.findMany({
-        where: { idDoador },
-        orderBy: { dataPostagem: "desc" },
-      });
-  
-      res.status(200).json({ produtos });
-    } catch (error) {
-      console.error("Erro ao buscar produtos do usuário:", error);
-      res.status(500).json({ message: "Erro ao buscar produtos", error });
-    }
-  };
-
-  export const getProductByStatus = async (
+export const getProductByStatus = async (
   req: Request,
   res: Response
-): Promise<void> => {
+  ): Promise<void> => {
   const status = req.params.status?.toUpperCase(); // garante que está em caixa alta
 
   const statusPermitidos = ["DISPONIVEL", "INDISPONIVEL", "DOADO"];
@@ -150,74 +150,111 @@ export const getProductByUser = async (
 };
 
 export const getAllProducts = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const produtos = await prisma.produtos.findMany({
-        orderBy: { dataPostagem: "desc" },
-        include: {
-          doador: {
-            select: {
-              idUsuario: true,
-              nome: true,
-              nomeOrganizacao: true,
-            }
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const produtos = await prisma.produtos.findMany({
+      orderBy: { dataPostagem: "desc" },
+      include: {
+        doador: {
+          select: {
+            idUsuario: true,
+            nome: true,
+            nomeOrganizacao: true,
           }
         }
-      });
-  
-      res.status(200).json({ produtos });
-    } catch (error) {
-      console.error("Erro ao listar todos os produtos:", error);
-      res.status(500).json({ message: "Erro ao listar produtos", error });
-    }
-  };
+      }
+    });
 
-  export const updateProduct = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
-    const idProduto = parseInt(req.params.id);
-    const idDoador = (req.user as JwtPayload)?.userId;
-    const { descricao, quantidade, unidade, tipo, status } = req.body;
-  
-    if (isNaN(idProduto)) {
-      res.status(400).json({ message: "ID do produto inválido." });
+    res.status(200).json({ produtos });
+  } catch (error) {
+    console.error("Erro ao listar todos os produtos:", error);
+    res.status(500).json({ message: "Erro ao listar produtos", error });
+  }
+};
+
+export const updateProduct = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const idProduto = parseInt(req.params.id);
+  const idDoador = (req.user as JwtPayload)?.userId;
+  const { descricao, quantidade, unidade, tipo, status } = req.body;
+
+  if (isNaN(idProduto)) {
+    res.status(400).json({ message: "ID do produto inválido." });
+    return;
+  }
+
+  try {
+    const produto = await prisma.produtos.findUnique({
+      where: { idProduto },
+    });
+
+    if (!produto || produto.idDoador !== idDoador) {
+      res.status(403).json({ message: "Você não tem permissão para editar este produto." });
       return;
     }
-  
-    try {
-      const produto = await prisma.produtos.findUnique({
-        where: { idProduto },
-      });
-  
-      if (!produto || produto.idDoador !== idDoador) {
-        res.status(403).json({ message: "Você não tem permissão para editar este produto." });
-        return;
-      }
-  
-      if (req.file && produto.imagem) {
-        await deletarImagemCloudinary(produto.imagem);
-      }
-      
-      const novaImagem = req.file?.path || produto.imagem;
-      
-      const produtoAtualizado = await prisma.produtos.update({
-        where: { idProduto },
-        data: {
-          imagem: novaImagem,
-          descricao: descricao || produto.descricao,
-          quantidade: quantidade ? parseFloat(quantidade) : produto.quantidade,
-          unidade: unidade || produto.unidade,
-          tipo: tipo || produto.tipo,
-          status: status || produto.status,
-        },
-      });
-  
-      res.status(200).json({ message: "Produto atualizado com sucesso!", produtoAtualizado });
-    } catch (error) {
-      console.error("Erro ao editar produto:", error);
-      res.status(500).json({ message: "Erro ao editar produto", error });
+
+    if (req.file && produto.imagem) {
+      await deletarImagemCloudinary(produto.imagem);
     }
-  };
+    
+    const novaImagem = req.file?.path || produto.imagem;
+    
+    const produtoAtualizado = await prisma.produtos.update({
+      where: { idProduto },
+      data: {
+        imagem: novaImagem,
+        descricao: descricao || produto.descricao,
+        quantidade: quantidade ? parseFloat(quantidade) : produto.quantidade,
+        unidade: unidade || produto.unidade,
+        tipo: tipo || produto.tipo,
+        status: status || produto.status,
+      },
+    });
+
+    res.status(200).json({ message: "Produto atualizado com sucesso!", produtoAtualizado });
+  } catch (error) {
+    console.error("Erro ao editar produto:", error);
+    res.status(500).json({ message: "Erro ao editar produto", error });
+  }
+};
+
+export const deleteProduct = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const idProduto = parseInt(req.params.id);
+  const idDoador = (req.user as JwtPayload)?.userId;
+
+  if (isNaN(idProduto)) {
+    res.status(400).json({ message: "ID do produto inválido." });
+    return;
+  }
+
+  try {
+    const produto = await prisma.produtos.findUnique({
+      where: { idProduto },
+    });
+
+    if (!produto || produto.idDoador !== idDoador) {
+      res.status(403).json({ message: "Você não tem permissão para deletar este produto." });
+      return;
+    }
+
+    if (produto.imagem) {
+      await deletarImagemCloudinary(produto.imagem);
+    }
+
+    await prisma.produtos.delete({
+      where: { idProduto },
+    });
+
+    res.status(200).json({ message: "Produto deletado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao deletar produto:", error);
+    res.status(500).json({ message: "Erro ao deletar produto", error });
+  }
+}
