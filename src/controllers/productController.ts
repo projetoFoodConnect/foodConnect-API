@@ -244,12 +244,9 @@ export const deleteProduct = async (
       return;
     }
 
-    if (produto.imagem) {
-      await deletarImagemCloudinary(produto.imagem);
-    }
-
-    await prisma.produtos.delete({
+    await prisma.produtos.update({
       where: { idProduto },
+      data: { status: "INDISPONIVEL" },
     });
 
     res.status(200).json({ message: "Produto deletado com sucesso!" });

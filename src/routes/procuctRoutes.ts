@@ -11,6 +11,6 @@ router.get("/produto/user", authenticateToken, getProductByUser);
 router.get("/produto/:status", getProductByStatus);
 router.get("/produto", getAllProducts);
 router.put("/produto/:id", authenticateToken, upload.single("imagem"), updateProduct);
-router.delete("/produto/:id", authenticateToken, deleteProduct);
+router.put("/produto/delete/:id", authenticateToken, deleteProduct);
 
 export default router;
