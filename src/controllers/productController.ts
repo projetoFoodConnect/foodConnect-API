@@ -3,6 +3,7 @@ import { PrismaClient, StatusProduto } from "@prisma/client";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { deletarImagemCloudinary } from "../utils/cloudinaryUtils";
 import { JwtPayload } from "jsonwebtoken";
+import { registrarAuditoriasDeProduto } from "./auditoriaProdutoController";
 
 const prisma = new PrismaClient();
 
@@ -180,7 +181,6 @@ export const updateProduct = async (
 ): Promise<void> => {
   const idProduto = parseInt(req.params.id);
   const idDoador = (req.user as JwtPayload)?.userId;
-  const { descricao, quantidade, unidade, tipo, status } = req.body;
 
   if (isNaN(idProduto)) {
     res.status(400).json({ message: "ID do produto inválido." });
@@ -188,34 +188,37 @@ export const updateProduct = async (
   }
 
   try {
-    const produto = await prisma.produtos.findUnique({
-      where: { idProduto },
-    });
+    const produto = await prisma.produtos.findUnique({ where: { idProduto } });
 
     if (!produto || produto.idDoador !== idDoador) {
       res.status(403).json({ message: "Você não tem permissão para editar este produto." });
       return;
     }
 
-    if (req.file && produto.imagem) {
+    if (req.file?.path && produto.imagem) {
       await deletarImagemCloudinary(produto.imagem);
     }
-    
-    const novaImagem = req.file?.path || produto.imagem;
-    
+
+    const dadosAtualizados = {
+      imagem: req.file?.path || produto.imagem,
+      descricao: req.body.descricao || produto.descricao,
+      quantidade: req.body.quantidade ? parseFloat(req.body.quantidade) : produto.quantidade,
+      unidade: req.body.unidade || produto.unidade,
+      tipo: req.body.tipo || produto.tipo,
+      status: req.body.status || produto.status,
+    };
+
     const produtoAtualizado = await prisma.produtos.update({
       where: { idProduto },
-      data: {
-        imagem: novaImagem,
-        descricao: descricao || produto.descricao,
-        quantidade: quantidade ? parseFloat(quantidade) : produto.quantidade,
-        unidade: unidade || produto.unidade,
-        tipo: tipo || produto.tipo,
-        status: status || produto.status,
-      },
+      data: dadosAtualizados,
     });
 
-    res.status(200).json({ message: "Produto atualizado com sucesso!", produtoAtualizado });
+    await registrarAuditoriasDeProduto(idProduto, idDoador, produto, dadosAtualizados);
+
+    res.status(200).json({
+      message: "Produto atualizado com sucesso!",
+      produtoAtualizado,
+    });
   } catch (error) {
     console.error("Erro ao editar produto:", error);
     res.status(500).json({ message: "Erro ao editar produto", error });
@@ -248,6 +251,8 @@ export const deleteProduct = async (
       where: { idProduto },
       data: { status: "INDISPONIVEL" },
     });
+
+    await registrarAuditoriasDeProduto(idProduto, idDoador, produto, { status: "INDISPONIVEL" });
 
     res.status(200).json({ message: "Produto deletado com sucesso!" });
   } catch (error) {
