@@ -173,3 +173,43 @@ export const getDonationsByUser = async (
     res.status(500).json({ message: "Erro interno ao buscar doações", error });
   }
 }
+
+export const getAllDonations = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const doacoes = await prisma.doacoes.findMany({
+      orderBy: {
+        dataReserva: "desc"
+      },
+      include: {
+        produto: {
+          select: {
+            descricao: true,
+            tipo: true,
+            unidade: true,
+          }
+        },
+        receptor: {
+          select: {
+            nome: true,
+            email: true,
+          }
+        },
+        doador: {
+          select: {
+            nome: true,
+            email: true,
+            nomeOrganizacao: true,
+          }
+        }
+      }
+    });
+
+    res.status(200).json({ doacoes });
+  } catch (error) {
+    console.error("Erro ao buscar todas as doações:", error);
+    res.status(500).json({ message: "Erro interno ao buscar doações", error });
+  }
+}
