@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { deletarImagemCloudinary } from "../utils/cloudinaryUtils";
 import { JwtPayload } from "jsonwebtoken";
 import { registrarAuditoriasDeProduto } from "./auditoriaProdutoController";
+import { validarEAtualizarQuantidade } from "../services/productService";
 
 const prisma = new PrismaClient();
 
@@ -180,7 +181,6 @@ export const updateProduct = async (
   res: Response
 ): Promise<void> => {
   const idProduto = parseInt(req.params.id);
-  const idDoador = (req.user as JwtPayload)?.userId;
 
   if (isNaN(idProduto)) {
     res.status(400).json({ message: "ID do produto inválido." });
@@ -190,8 +190,8 @@ export const updateProduct = async (
   try {
     const produto = await prisma.produtos.findUnique({ where: { idProduto } });
 
-    if (!produto || produto.idDoador !== idDoador) {
-      res.status(403).json({ message: "Você não tem permissão para editar este produto." });
+    if (!produto) {
+      res.status(404).json({ message: "Produto não encontrado" });
       return;
     }
 
@@ -199,25 +199,42 @@ export const updateProduct = async (
       await deletarImagemCloudinary(produto.imagem);
     }
 
-    const dadosAtualizados = {
-      imagem: req.file?.path || produto.imagem,
-      descricao: req.body.descricao || produto.descricao,
-      quantidade: req.body.quantidade ? parseFloat(req.body.quantidade) : produto.quantidade,
-      unidade: req.body.unidade || produto.unidade,
-      tipo: req.body.tipo || produto.tipo,
-      status: req.body.status || produto.status,
-    };
+    // Atualiza primeiro a quantidade (se foi enviada)
+    let produtoAtualizado = produto;
 
-    const produtoAtualizado = await prisma.produtos.update({
+    if (req.body.quantidade !== undefined) {
+      const resultadoQuantidade = await validarEAtualizarQuantidade(idProduto, req.body.quantidade);
+
+      if (!resultadoQuantidade.sucesso) {
+        res.status(400).json({ message: resultadoQuantidade.mensagem });
+        return;
+      }
+
+      produtoAtualizado = resultadoQuantidade.produto;
+    }
+
+    // Agora atualiza os outros campos (imagem, descrição, etc.)
+    const outrosCamposAtualizados = await prisma.produtos.update({
       where: { idProduto },
-      data: dadosAtualizados,
+      data: {
+        imagem: req.file?.path || produtoAtualizado.imagem,
+        descricao: req.body.descricao || produtoAtualizado.descricao,
+        unidade: req.body.unidade || produtoAtualizado.unidade,
+        tipo: req.body.tipo || produtoAtualizado.tipo,
+        status: req.body.status || produtoAtualizado.status,
+      },
     });
 
-    await registrarAuditoriasDeProduto(idProduto, idDoador, produto, dadosAtualizados);
+    await registrarAuditoriasDeProduto(
+      idProduto,
+      produto.idDoador,
+      produto,
+      outrosCamposAtualizados
+    );
 
     res.status(200).json({
       message: "Produto atualizado com sucesso!",
-      produtoAtualizado,
+      produtoAtualizado: outrosCamposAtualizados,
     });
   } catch (error) {
     console.error("Erro ao editar produto:", error);
