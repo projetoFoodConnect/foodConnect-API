@@ -120,3 +120,56 @@ export const getDonationById = async (
     res.status(500).json({ message: "Erro interno ao buscar doação", error });
   }
 };
+
+export const getDonationsByUser = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const idUsuario = (req.user as JwtPayload)?.userId;
+
+  if (!idUsuario) {
+    res.status(401).json({ message: "Usuário não autenticado." });
+    return;
+  }
+
+  try {
+    const doacoes = await prisma.doacoes.findMany({
+      where: {
+        OR: [
+          { idDoador: idUsuario },
+          { idReceptor: idUsuario }
+        ]
+      },
+      orderBy: {
+        dataReserva: "desc"
+      },
+      include: {
+        produto: {
+          select: {
+            descricao: true,
+            tipo: true,
+            unidade: true,
+          }
+        },
+        receptor: {
+          select: {
+            nome: true,
+            email: true,
+          }
+        },
+        doador: {
+          select: {
+            nome: true,
+            email: true,
+            nomeOrganizacao: true,
+          }
+        }
+      }
+    });
+
+    res.status(200).json({ doacoes });
+  } catch (error) {
+    console.error("Erro ao buscar doações:", error);
+    res.status(500).json({ message: "Erro interno ao buscar doações", error });
+  }
+}
