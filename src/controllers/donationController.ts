@@ -1,13 +1,13 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { PrismaClient } from "@prisma/client";
 import { JwtPayload } from "jsonwebtoken";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { validarEAtualizarQuantidade } from "../services/productService";
-import { registrarAuditoriasDeProduto } from "./auditoriaProdutoController";
+import { registerProductAudit } from "./auditController";
 
 const prisma = new PrismaClient();
 
-export const criarDoacao = async (
+export const registerDonation = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -54,7 +54,7 @@ export const criarDoacao = async (
       },
     });
 
-    await registrarAuditoriasDeProduto(
+    await registerProductAudit(
       idProduto,
       produto.idDoador,
       produto,
@@ -68,5 +68,55 @@ export const criarDoacao = async (
   } catch (error) {
     console.error("Erro ao registrar doação:", error);
     res.status(500).json({ message: "Erro ao registrar doação", error });
+  }
+};
+
+export const getDonationById = async (
+  req: Request<{ id: string }>,
+  res: Response
+): Promise<void> => {
+  const idDoacao = parseInt(req.params.id);
+
+  if (isNaN(idDoacao)) {
+    res.status(400).json({ message: "ID da doação inválido." });
+    return;
+  }
+
+  try {
+    const doacao = await prisma.doacoes.findUnique({
+      where: { idDoacao },
+      include: {
+        produto: {
+          select: {
+            descricao: true,
+            tipo: true,
+            unidade: true,
+          }
+        },
+        receptor: {
+          select: {
+            nome: true,
+            email: true,
+          }
+        },
+        doador: {
+          select: {
+            nome: true,
+            email: true,
+            nomeOrganizacao: true,
+          }
+        }
+      }
+    });
+
+    if (!doacao) {
+      res.status(404).json({ message: "Doação não encontrada." });
+      return;
+    }
+
+    res.status(200).json({ doacao });
+  } catch (error) {
+    console.error("Erro ao buscar doação:", error);
+    res.status(500).json({ message: "Erro interno ao buscar doação", error });
   }
 };

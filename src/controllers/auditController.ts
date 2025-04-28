@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const registrarAuditoria = async (
+export const auditRegister = async (
   idProduto: number,
   idUsuario: number,
   campoAlterado: string,
@@ -25,7 +25,7 @@ export const registrarAuditoria = async (
   }
 };
 
-export const registrarAuditoriasDeProduto = async (
+export const registerProductAudit = async (
   idProduto: number,
   idUsuario: number,
   dadosAntigos: any,
@@ -38,7 +38,7 @@ export const registrarAuditoriasDeProduto = async (
     const novo = dadosNovos[campo];
 
     if (novo !== undefined && String(antigo) !== String(novo)) {
-      await registrarAuditoria(idProduto, idUsuario, campo, String(antigo), String(novo));
+      await auditRegister(idProduto, idUsuario, campo, String(antigo), String(novo));
     }
   }
 };

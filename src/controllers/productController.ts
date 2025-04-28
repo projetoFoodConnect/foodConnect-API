@@ -3,14 +3,14 @@ import { PrismaClient, StatusProduto } from "@prisma/client";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { deletarImagemCloudinary } from "../utils/cloudinaryUtils";
 import { JwtPayload } from "jsonwebtoken";
-import { registrarAuditoriasDeProduto } from "./auditoriaProdutoController";
+import { registerProductAudit } from "./auditController";
 import { validarEAtualizarQuantidade } from "../services/productService";
 
 const prisma = new PrismaClient();
 
 const IMAGEM_PADRAO = "https://res.cloudinary.com/foodconnect/image/upload/v1745265109/imagemCestaSupermercado_wzzoly.webp";
 
-export const cadastrarProduto = async (
+export const registerProduct = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -223,7 +223,7 @@ export const updateProduct = async (
       },
     });
 
-    await registrarAuditoriasDeProduto(
+    await registerProductAudit(
       idProduto,
       produto.idDoador,
       produto,
@@ -267,7 +267,7 @@ export const deleteProduct = async (
       data: { status: "INDISPONIVEL" },
     });
 
-    await registrarAuditoriasDeProduto(idProduto, idDoador, produto, { status: "INDISPONIVEL" });
+    await registerProductAudit(idProduto, idDoador, produto, { status: "INDISPONIVEL" });
 
     res.status(200).json({ message: "Produto deletado com sucesso!" });
   } catch (error) {

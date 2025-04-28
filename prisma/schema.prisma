@@ -22,6 +22,7 @@ model Usuarios {
   
   produtos       Produtos[]
   doacoesRecebidas Doacoes[] @relation("Receptor")
+  doacoesRealizadas Doacoes[] @relation("Doador")
   auditorias     AuditoriaProdutos[]
 }
 
@@ -54,6 +55,7 @@ model Doacoes {
   
   produto      Produtos  @relation(fields: [idProduto, idDoador], references: [idProduto, idDoador])
   receptor     Usuarios  @relation("Receptor", fields: [idReceptor], references: [idUsuario])
+  doador       Usuarios  @relation("Doador", fields: [idDoador], references: [idUsuario])
 }
 
 model AuditoriaProdutos {
