@@ -199,7 +199,6 @@ export const updateProduct = async (
       await deletarImagemCloudinary(produto.imagem);
     }
 
-    // Atualiza primeiro a quantidade (se foi enviada)
     let produtoAtualizado = produto;
 
     if (req.body.quantidade !== undefined) {
@@ -213,7 +212,6 @@ export const updateProduct = async (
       produtoAtualizado = resultadoQuantidade.produto;
     }
 
-    // Agora atualiza os outros campos (imagem, descrição, etc.)
     const outrosCamposAtualizados = await prisma.produtos.update({
       where: { idProduto },
       data: {
