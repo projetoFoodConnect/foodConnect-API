@@ -52,6 +52,7 @@ export const registerDonation = async (
         quantidade: quantidadeRequisitada,
         dataPlanejada: new Date(dataPlanejada),
         dataReserva: new Date(),
+        status: "PLANEJADA",
       },
     });
 
@@ -221,7 +222,7 @@ export const updateDonation = async (
 ): Promise<void> => {
   const idDoacao = parseInt(req.params.id);
   const idUsuario = (req.user as JwtPayload)?.userId;
-  const { quantidade, dataPlanejada } = req.body;
+  const { quantidade, dataPlanejada, status } = req.body;
 
   if (isNaN(idDoacao)) {
     res.status(400).json({ message: "ID da doação inválido." });
@@ -238,7 +239,7 @@ export const updateDonation = async (
       return;
     }
 
-    if (doacao.idReceptor !== idUsuario) {
+    if (doacao.idReceptor !== idUsuario || doacao.idDoador !== idUsuario) {
       res.status(403).json({ message: "Você não tem permissão para editar esta doação." });
       return;
     }
@@ -255,18 +256,16 @@ export const updateDonation = async (
     const atualizacaoData: any = {};
 
     if (quantidade !== undefined) {
-      const quantidadeAtualDoacao = doacao.quantidade; // Y
-      const novaQuantidadeDesejada = parseFloat(quantidade); // Y1
+      const quantidadeAtualDoacao = doacao.quantidade; 
+      const novaQuantidadeDesejada = parseFloat(quantidade);
 
       let diferenca = 0;
       let novoValorParaProduto = 0;
 
       if (novaQuantidadeDesejada > quantidadeAtualDoacao) {
-        // Requisitou mais: precisa subtrair mais do estoque
         diferenca = novaQuantidadeDesejada - quantidadeAtualDoacao;
         novoValorParaProduto = -diferenca;
       } else if (novaQuantidadeDesejada < quantidadeAtualDoacao) {
-        // Requisitou menos: devolve para o estoque
         diferenca = quantidadeAtualDoacao - novaQuantidadeDesejada;
         novoValorParaProduto = diferenca;
       }
@@ -282,10 +281,8 @@ export const updateDonation = async (
           return;
         }
 
-        // ⚡ Atualiza o produto com o novo estoque
         const produtoAtualizado = resultadoAtualizacao.produto;
 
-        // 📝 Registrar auditoria de alteração no produto
         await registerProductAudit(
           produto.idProduto,
           produto.idDoador,
@@ -306,6 +303,15 @@ export const updateDonation = async (
       }
 
       atualizacaoData.dataPlanejada = novaData;
+    }
+
+    if (status !== undefined) {
+      if (!["PLANEJADA", "PENDENTE", "RECEBIDA", "CANCELADA"].includes(status)) {
+        res.status(400).json({ message: "Status inválido." });
+        return;
+      }
+
+      atualizacaoData.status = status;
     }
 
     const doacaoAtualizada = await prisma.doacoes.update({

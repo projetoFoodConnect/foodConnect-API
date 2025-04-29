@@ -52,6 +52,7 @@ model Doacoes {
   idReceptor    Int
   dataReserva   DateTime @default(now())
   dataPlanejada DateTime
+  status        StatusDoacao @default(PLANEJADA)
   
   produto      Produtos  @relation(fields: [idProduto, idDoador], references: [idProduto, idDoador])
   receptor     Usuarios  @relation("Receptor", fields: [idReceptor], references: [idUsuario])
@@ -80,4 +81,11 @@ enum StatusProduto {
   DISPONIVEL
   INDISPONIVEL
   DOADO
+}
+
+enum StatusDoacao {
+  PLANEJADA
+  PENDENTE
+  RECEBIDA
+  CANCELADA
 }
