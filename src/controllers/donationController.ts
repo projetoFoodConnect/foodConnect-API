@@ -222,7 +222,7 @@ export const updateDonation = async (
 ): Promise<void> => {
   const idDoacao = parseInt(req.params.id);
   const idUsuario = (req.user as JwtPayload)?.userId;
-  const { quantidade, dataPlanejada, status } = req.body;
+  const { quantidade, dataPlanejada, status } = req.body || {};
 
   if (isNaN(idDoacao)) {
     res.status(400).json({ message: "ID da doação inválido." });
@@ -239,7 +239,7 @@ export const updateDonation = async (
       return;
     }
 
-    if (doacao.idReceptor !== idUsuario || doacao.idDoador !== idUsuario) {
+    if (doacao.idReceptor !== idUsuario && doacao.idDoador !== idUsuario) {
       res.status(403).json({ message: "Você não tem permissão para editar esta doação." });
       return;
     }
@@ -319,6 +319,7 @@ export const updateDonation = async (
       data: atualizacaoData,
     });
 
+
     res.status(200).json({
       message: "Doação atualizada com sucesso!",
       doacaoAtualizada,
@@ -328,3 +329,44 @@ export const updateDonation = async (
     res.status(500).json({ message: "Erro ao atualizar doação", error });
   }
 };
+
+export const deleteDonation = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const idDoacao = parseInt(req.params.id);
+  const idUsuario = (req.user as JwtPayload)?.userId;
+
+  if (isNaN(idDoacao)) {
+    res.status(400).json({ message: "ID da doação inválido." });
+    return;
+  }
+
+  try {
+    const doacao = await prisma.doacoes.findUnique({
+      where: { idDoacao },
+    });
+
+    if (!doacao) {
+      res.status(404).json({ message: "Doação não encontrada." });
+      return;
+    }
+
+    if (doacao.idReceptor !== idUsuario && doacao.idDoador !== idUsuario) {
+      res.status(403).json({ message: "Você não tem permissão para deletar esta doação." });
+      return;
+    }
+
+    const doacaoCancelada = await prisma.doacoes.update({
+      where: { idDoacao },
+      data: {
+        status: "CANCELADA",
+      },
+    });
+
+    res.status(200).json({ message: "Doação deletada com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao deletar doação:", error);
+    res.status(500).json({ message: "Erro ao deletar doação", error });
+  }
+}
