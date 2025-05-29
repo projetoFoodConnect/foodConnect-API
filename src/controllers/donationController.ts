@@ -4,7 +4,6 @@ import { JwtPayload } from "jsonwebtoken";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import { validarEAtualizarQuantidade } from "../services/productService";
 import { registerProductAudit } from "./auditController";
-import { updateProduct } from "./productController";
 
 const prisma = new PrismaClient();
 
@@ -174,7 +173,7 @@ export const getDonationsByUser = async (
     console.error("Erro ao buscar doações:", error);
     res.status(500).json({ message: "Erro interno ao buscar doações", error });
   }
-}
+};
 
 export const getAllDonations = async (
   req: Request,
@@ -214,7 +213,7 @@ export const getAllDonations = async (
     console.error("Erro ao buscar todas as doações:", error);
     res.status(500).json({ message: "Erro interno ao buscar doações", error });
   }
-}
+};
 
 export const updateDonation = async (
   req: AuthenticatedRequest,
@@ -369,4 +368,4 @@ export const deleteDonation = async (
     console.error("Erro ao deletar doação:", error);
     res.status(500).json({ message: "Erro ao deletar doação", error });
   }
-}
+};
