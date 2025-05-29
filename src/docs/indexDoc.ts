@@ -1,1 +1,2 @@
 import "./userDoc";
+import "./productDoc";
