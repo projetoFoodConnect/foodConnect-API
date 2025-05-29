@@ -8,22 +8,22 @@ datasource db {
 }
 
 model Usuarios {
-  idUsuario       Int      @id @default(autoincrement())
-  nome           String   @db.VarChar(200)
-  email          String   @unique @db.VarChar(200)
-  senha          String   @db.VarChar(200)
-  telefone       String   @unique @db.VarChar(20)
-  endereco       String   @db.VarChar(200)
-  perfilUsuario  String   @db.VarChar(20)
-  nomeOrganizacao String?  @db.VarChar(200)
-  dataCadastro   DateTime @default(now())
+  idUsuario       Int            @id @default(autoincrement())
+  nome            String         @db.VarChar(200)
+  email           String         @unique @db.VarChar(200)
+  senha           String         @db.VarChar(200)
+  telefone        String         @unique @db.VarChar(20)
+  endereco        String         @db.VarChar(200)
+  perfilUsuario   PerfilUsuario
+  nomeOrganizacao String?        @db.VarChar(200)
+  dataCadastro    DateTime       @default(now())
   lastLogin       DateTime?
-  status         StatusUsuario @default(ATIVO)
-  
-  produtos       Produtos[]
-  doacoesRecebidas Doacoes[] @relation("Receptor")
-  doacoesRealizadas Doacoes[] @relation("Doador")
-  auditorias     AuditoriaProdutos[]
+  status          StatusUsuario  @default(ATIVO)
+
+  produtos         Produtos[]
+  doacoesRecebidas Doacoes[]     @relation("Receptor")
+  doacoesRealizadas Doacoes[]    @relation("Doador")
+  auditorias       AuditoriaProdutos[]
 }
 
 model Produtos {
@@ -70,6 +70,12 @@ model AuditoriaProdutos {
   
   produto      Produtos  @relation(fields: [idProduto], references: [idProduto])
   usuario      Usuarios  @relation(fields: [idUsuario], references: [idUsuario])
+}
+
+enum PerfilUsuario {
+  DOADOR
+  RECEPTOR
+  ADMINISTRADOR
 }
 
 enum StatusUsuario {
