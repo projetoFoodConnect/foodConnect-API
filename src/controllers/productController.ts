@@ -101,7 +101,7 @@ export const getProductByStatus = async (
   req: Request,
   res: Response
   ): Promise<void> => {
-  const status = req.params.status?.toUpperCase(); // garante que está em caixa alta
+  const status = req.params.status?.toUpperCase();
 
   const statusPermitidos = ["DISPONIVEL", "INDISPONIVEL", "DOADO"];
 
