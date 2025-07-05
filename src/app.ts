@@ -11,24 +11,17 @@ import doacaoRoutes from "./routes/donationRoutes"
 dotenv.config()
 const app = express()
 
-app.use((req, _res, next) => {
-  console.log('[CORS DEBUG] Origin:', req.headers.origin)
-  next()
-})
+const FRONT_URL_DEV = "http://localhost:5173"
 
-const FRONT_URL_DEV      = process.env.FRONT_URL       || "http://localhost:5173"
-const FRONT_URL_NETLIFY  = process.env.FRONT_URL_PROD  || "https://foodconnectweb.netlify.app"
-
-const whitelist = [FRONT_URL_DEV, FRONT_URL_NETLIFY]
+const whitelist = [FRONT_URL_DEV]
 
 const corsOptions = {
   origin: whitelist,       
-  withCredentials: true,         
+  credentials: true,         
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
 }
 
-// Aplica CORS a todas as rotas e ao preflight
 app.use(cors(corsOptions))
 
 app.use(express.json())
