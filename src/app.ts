@@ -14,14 +14,11 @@ const app = express()
 const FRONT_URL_DEV = "http://localhost:5173"
 
 
-const corsOptions = {
-  origin: FRONT_URL_DEV,       
-  credentials: true,         
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
-}
+app.use(cors({
+  origin: "http://localhost:5173", 
+  credentials: true,
+}))
 
-app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
