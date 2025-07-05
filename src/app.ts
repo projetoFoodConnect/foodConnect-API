@@ -7,8 +7,14 @@ import usuarioRoutes from "./routes/userRoutes"
 import produtoRoutes from "./routes/procuctRoutes"
 import doacaoRoutes from "./routes/donationRoutes"
 
+
 dotenv.config()
 const app = express()
+
+app.use((req, _res, next) => {
+  console.log('[CORS DEBUG] Origin:', req.headers.origin)
+  next()
+})
 
 const FRONT_URL_DEV      = process.env.FRONT_URL       || "http://localhost:5173"
 const FRONT_URL_NETLIFY  = process.env.FRONT_URL_PROD  || "https://foodconnectweb.netlify.app"
