@@ -16,8 +16,8 @@ const FRONT_URL_NETLIFY  = process.env.FRONT_URL_PROD  || "https://foodconnectwe
 const whitelist = [FRONT_URL_DEV, FRONT_URL_NETLIFY]
 
 const corsOptions = {
-  origin: whitelist,       // array sem "*"
-  credentials: true,       // habilita cookies
+  origin: whitelist,       
+  withCredentials: true,         
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
 }
