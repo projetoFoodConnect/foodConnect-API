@@ -15,20 +15,15 @@ const FRONT_URL_NETLIFY  = process.env.FRONT_URL_PROD  || "https://foodconnectwe
 
 const whitelist = [FRONT_URL_DEV, FRONT_URL_NETLIFY]
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      if (whitelist.includes(origin)) return callback(null, true)
-      return callback(
-        new Error(`CORS bloqueado para origem: ${origin}`)
-      )
-    },
-    credentials: true,                
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-)
+const corsOptions = {
+  origin: whitelist,       // array sem "*"
+  credentials: true,       // habilita cookies
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
+}
+
+// Aplica CORS a todas as rotas e ao preflight
+app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
