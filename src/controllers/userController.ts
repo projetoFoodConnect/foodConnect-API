@@ -9,7 +9,7 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-export const registerUser = async (req: Request, res: Response)=> {
+export const registerUser = async (req: Request, res: Response) => {
   const { nome, email, senha, telefone, endereco, perfilUsuario, nomeOrganizacao } = req.body;
 
   if (!email || !senha || !nome || !perfilUsuario || !telefone || !endereco || !nomeOrganizacao) {
@@ -43,10 +43,11 @@ export const registerUser = async (req: Request, res: Response)=> {
     });
 
     const token = jwt.sign(
-      { idUsuario: usuario.idUsuario, email: usuario.email, perfilUsuario: usuario.perfilUsuario },
+      { userId: usuario.idUsuario, email: usuario.email, perfil: usuario.perfilUsuario },
       process.env.JWT_SECRET as string,
       { expiresIn: "24h" }
     );
+
 
     return res.status(201).json({ usuario, token });
   } catch (error) {
@@ -92,13 +93,15 @@ export const loginUser = async (req: Request, res: Response) => {
       },
     });
 
-    return res.json({ message: "Login bem-sucedido!", 
-    user: { 
-      id: usuario.idUsuario, 
-      nameUser: usuario.nome, 
-      email: usuario.email, 
-      lastLogin: updateLogin.lastLogin},
-     });
+    return res.json({
+      message: "Login bem-sucedido!",
+      user: {
+        id: usuario.idUsuario,
+        nameUser: usuario.nome,
+        email: usuario.email,
+        lastLogin: updateLogin.lastLogin
+      },
+    });
 
   } catch (error) {
     console.error('Erro ao fazer login:', error);
@@ -107,7 +110,7 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
-  res.clearCookie("token"); 
+  res.clearCookie("token");
   res.status(200).json({ message: "Logout realizado com sucesso!" });
 };
 
@@ -143,7 +146,7 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response): 
   res.status(200).json({ usuario });
 };
 
-export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise <void> => {
+export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const idUsuario = (req.user as JwtPayload)?.userId;
   const { nome, email, senha, telefone, endereco, nomeOrganizacao } = req.body;
 

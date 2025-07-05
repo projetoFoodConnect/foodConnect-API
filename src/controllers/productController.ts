@@ -38,6 +38,9 @@ export const registerProduct = async (
     console.error("Erro ao cadastrar produto:", error);
     res.status(500).json({ message: "Erro ao cadastrar produto", error });
   }
+  console.log('[registerProduct] req.file:', req.file)
+  console.log('[registerProduct] req.body:', req.body)
+
 };
 
 export const getProductById = async (
@@ -82,7 +85,8 @@ export const getProductByUser = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
-  const idDoador = (req.user as JwtPayload)?.userId;
+ const idDoador = Number((req.user as JwtPayload)?.userId);
+console.log('[getProductByUser] idDoador extraído do token:', idDoador);
 
   try {
     const produtos = await prisma.produtos.findMany({
@@ -100,8 +104,10 @@ export const getProductByUser = async (
 export const getProductByStatus = async (
   req: Request,
   res: Response
-  ): Promise<void> => {
+): Promise<void> => {
   const status = req.params.status?.toUpperCase();
+
+  console.log('Status recebido:', status);
 
   const statusPermitidos = ["DISPONIVEL", "INDISPONIVEL", "DOADO"];
 
@@ -130,6 +136,7 @@ export const getProductByStatus = async (
     console.error("Erro ao buscar produtos por status:", error);
     res.status(500).json({ message: "Erro ao buscar produtos", error });
   }
+
 };
 
 export const getAllProducts = async (

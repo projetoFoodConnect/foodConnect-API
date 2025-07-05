@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export const authenticateToken = (
+  
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -19,7 +20,7 @@ export const authenticateToken = (
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
-    req.user = decoded;
+    req.user = { userId: decoded.userId }    // req.user = decoded;
     next();
   } catch (error) {
     res.status(403).json({ message: "Token inválido ou expirado." });
