@@ -13,7 +13,7 @@ const app = express()
 
 // Pegamos as URLs do front do .env
 const FRONT_URL_DEV  = process.env.FRONT_URL    || "http://localhost:5173"
-const FRONT_URL_PROD = process.env.FRONT_URL_PROD || "https://seu-front.onrender.app"
+const FRONT_URL_PROD = process.env.FRONT_URL_PROD || "https://foodconnectweb.netlify.app/"
 
 const whitelist = [FRONT_URL_DEV, FRONT_URL_PROD]
 
