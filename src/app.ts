@@ -12,9 +12,11 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL_PROD,
+  origin: process.env.FRONT_URL_PROD,
   credentials: true,
 }))
+
+console.log("CORS permitido para:", process.env.FRONT_URL_PROD)
 
 
 app.use(express.json())
