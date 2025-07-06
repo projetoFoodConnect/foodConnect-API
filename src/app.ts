@@ -12,14 +12,9 @@ dotenv.config()
 const app = express()
 
 
-const FRONT_URL_DEV      = "http://localhost:5173"
-const FRONT_URL_NETLIFY  = "https://foodconnectweb.netlify.app"
-
-const whitelist = [FRONT_URL_DEV, FRONT_URL_NETLIFY]
-
 
 app.use(cors({
-  origin: whitelist,
+  origin: process.env.FRONTEND_URL_PROD,
   credentials: true,
 }))
 
