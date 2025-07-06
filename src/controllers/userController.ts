@@ -10,10 +10,18 @@ interface AuthenticatedRequest extends Request {
 }
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { nome, email, senha, telefone, endereco, perfilUsuario, nomeOrganizacao } = req.body;
+  const {
+    nome,
+    email,
+    senha,
+    telefone,
+    endereco,
+    perfilUsuario,
+    nomeOrganizacao
+  } = req.body;
 
   if (!email || !senha || !nome || !perfilUsuario || !telefone || !endereco || !nomeOrganizacao) {
-    return res.status(400).json({ error: "Campos necessários do usuário são obrigatórios." });
+    return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
   try {
@@ -22,7 +30,7 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 
     if (existingUser && existingUser.status === "ATIVO") {
-      return res.status(400).json({ message: 'Email já registrado' });
+      return res.status(400).json({ message: "Email já registrado" });
     }
 
     const hashedPassword = await bcrypt.hash(senha, 10);
@@ -38,21 +46,40 @@ export const registerUser = async (req: Request, res: Response) => {
         nomeOrganizacao,
         dataCadastro: new Date(),
         lastLogin: new Date(),
-        status: "ATIVO"
-      }
+        status: "ATIVO",
+      },
     });
 
     const token = jwt.sign(
-      { userId: usuario.idUsuario, email: usuario.email, perfil: usuario.perfilUsuario },
+      {
+        userId: usuario.idUsuario,
+        email: usuario.email,
+        perfil: usuario.perfilUsuario,
+      },
       process.env.JWT_SECRET as string,
       { expiresIn: "24h" }
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,        
+      sameSite: "none",    
+      maxAge: 24 * 60 * 60 * 1000, 
+    });
 
-    return res.status(201).json({ usuario, token });
+    res.status(201).json({
+      message: "Usuário cadastrado com sucesso!",
+      usuario: {
+        idUsuario: usuario.idUsuario,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfilUsuario: usuario.perfilUsuario,
+      },
+    });
+
   } catch (error) {
-    console.error('Erro ao cadastrar usuário:', error);
-    return res.status(500).json({ message: 'Erro ao cadastrar usuário', error });
+    console.error("Erro ao cadastrar usuário:", error);
+    res.status(500).json({ message: "Erro interno ao cadastrar usuário." });
   }
 };
 

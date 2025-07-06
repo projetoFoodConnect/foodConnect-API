@@ -18,7 +18,6 @@ app.use(cors({
 
 console.log("CORS permitido para:", process.env.FRONT_URL_PROD)
 
-
 app.use(express.json())
 app.use(cookieParser())
 
